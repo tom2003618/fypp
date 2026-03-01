@@ -1,0 +1,75 @@
+province,party,votes,prov_share
+Alberta,Conservative Party of Canada,1438233,0.6904752417352029
+Alberta,Green Party of Canada,59271,0.028455165507179442
+Alberta,Liberal Party of Canada,288010,0.13826951152710013
+Alberta,New Democratic Party,241376,0.11588119028632797
+Alberta,People's Party of Canada,46672,0.022406564501207656
+British Columbia,Conservative Party of Canada,811362,0.3398475933734574
+British Columbia,Green Party of Canada,297835,0.12475135386225099
+British Columbia,Liberal Party of Canada,624545,0.2615973082340878
+British Columbia,New Democratic Party,583401,0.24436370673222116
+British Columbia,People's Party of Canada,39496,0.01654331919399488
+Manitoba,Conservative Party of Canada,267811,0.45220088511563744
+Manitoba,Green Party of Canada,30435,0.05138972610719659
+Manitoba,Liberal Party of Canada,156727,0.26463471672753736
+Manitoba,New Democratic Party,123331,0.20824531987930547
+Manitoba,People's Party of Canada,9988,0.016864813023120734
+New Brunswick,Conservative Party of Canada,144229,0.32793479002296444
+New Brunswick,Green Party of Canada,75738,0.1722061799413383
+New Brunswick,Liberal Party of Canada,164970,0.3750937905004434
+New Brunswick,New Democratic Party,41212,0.09370409949751028
+New Brunswick,People's Party of Canada,8926,0.02029512744139515
+Newfoundland and Labrador,Conservative Party of Canada,67962,0.27935941597678376
+Newfoundland and Labrador,Green Party of Canada,7617,0.03130985950229778
+Newfoundland and Labrador,Liberal Party of Canada,109148,0.44865544767714305
+Newfoundland and Labrador,New Democratic Party,57664,0.23702924226604954
+Newfoundland and Labrador,People's Party of Canada,335,0.0013770254605841876
+Northwest Territories,Conservative Party of Canada,4157,0.2551715671229513
+Northwest Territories,Green Party of Canada,1731,0.10625498741636487
+Northwest Territories,Liberal Party of Canada,6467,0.39696765085016267
+Northwest Territories,New Democratic Party,3640,0.2234362531459088
+Northwest Territories,People's Party of Canada,296,0.018169541464612363
+Nova Scotia,Conservative Party of Canada,137300,0.2571536666404456
+Nova Scotia,Green Party of Canada,58674,0.10989245620146763
+Nova Scotia,Liberal Party of Canada,221087,0.41408108300463364
+Nova Scotia,New Democratic Party,100853,0.18889088668382273
+Nova Scotia,People's Party of Canada,6260,0.0117245590179839
+Nunavut,Conservative Party of Canada,2469,0.2611592976517876
+Nunavut,Green Party of Canada,206,0.021789718637613708
+Nunavut,Liberal Party of Canada,2918,0.3086524222551301
+Nunavut,New Democratic Party,3861,0.4083985614554686
+Ontario,Conservative Party of Canada,2277937,0.3305086012236701
+Ontario,Green Party of Canada,429671,0.06234147880137843
+Ontario,Liberal Party of Canada,2863719,0.41550041155117434
+Ontario,New Democratic Party,1158696,0.16811658715911004
+Ontario,People's Party of Canada,108427,0.01573180298879156
+Prince Edward Island,Conservative Party of Canada,23321,0.27341899781930734
+Prince Edward Island,Green Party of Canada,17817,0.20888925364034985
+Prince Edward Island,Liberal Party of Canada,37300,0.43731094801510073
+Prince Edward Island,New Democratic Party,6444,0.07555044903510212
+Quebec,Bloc Québécois,1387030,0.3237442984190323
+Quebec,Conservative Party of Canada,684661,0.15980555222300388
+Quebec,Green Party of Canada,193420,0.04514583116458132
+Quebec,Liberal Party of Canada,1468603,0.34278411273807063
+Quebec,New Democratic Party,464414,0.10839807690242927
+Quebec,People's Party of Canada,62951,0.014693285170311026
+Saskatchewan,Conservative Party of Canada,372904,0.6400357001870827
+Saskatchewan,Green Party of Canada,14991,0.02572988002677514
+Saskatchewan,Liberal Party of Canada,68200,0.11705542110773562
+Saskatchewan,New Democratic Party,114213,0.1960300705421966
+Saskatchewan,People's Party of Canada,10457,0.017947925784803392
+Yukon,Conservative Party of Canada,6881,0.32740162725412764
+Yukon,Green Party of Canada,2201,0.10472474663367749
+Yukon,Liberal Party of Canada,7034,0.3346814483513346
+Yukon,New Democratic Party,4617,0.21967930722748252
+Yukon,People's Party of Canada,284,0.013512870533377741
+Alberta,Others,9399,0.0045123264429818895
+British Columbia,Others,30790,0.012896718603987804
+Manitoba,Others,3947,0.006664539147202397
+New Brunswick,Others,4735,0.010766012596348424
+Newfoundland and Labrador,Others,552,0.0022690091171417063
+Nova Scotia,Others,9748,0.018257348451646494
+Ontario,Others,53767,0.007801118275875527
+Prince Edward Island,Others,412,0.004830351490139986
+Quebec,Others,23259,0.00542884338257159
+Saskatchewan,Others,1865,0.003201002351406553
