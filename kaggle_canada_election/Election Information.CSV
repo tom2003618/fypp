@@ -1,0 +1,9 @@
+election_id,event_number,event_name_english_anglais,nom_de_l_événement_français_french,election_date,redistribution_boundaries,redist_notes
+GE.36.1997,3600,Thirty-Sixth General Election 1997,Trente-Sixième Élection Générale 1997,1997-06-02,1996,Representation Order based on 1991 Census
+GE.37.2000,3700,Thirty-Seventh General Election 2000,Trente-Septième Élection Générale 2000,2000-11-27,1999,"Nunavut Territory created, changes Province variable for territories, all else remains the same as the 1996 Redistribution"
+GE.38.2004,3800,Thirty-Eighth General Election 2004,Trente-Huitième Élection Générale 2004,2004-06-28,2003,Representation Order based on 2001 Census
+GE.39.2006,3900,Thirty-Nineth General Election 2006,Trente-Neuvième Élection Générale 2006,2006-01-23,2005,"Based on 2001 Census, however boundary changes in New Brunswick following successful legal challenge; some ridings names changed elsewhere"
+GE.40.2008,4000,Fortieth General Election 2008,Quarantième Élection Générale 2008,2008-10-14,2005,"Based on 2001 Census, however boundary changes in New Brunswick following successful legal challenge; some ridings names changed elsewhere"
+GE.41.2011,4100,Forty-First General Election 2011,Quarante et Unième Élection Générale 2011,2011-05-02,2005,"Based on 2001 Census, however boundary changes in New Brunswick following successful legal challenge; some ridings names changed elsewhere"
+GE.42.2015,4200,Forty-Second General Election 2015,Quarante-Deuxième Élection Générale 2015,2015-10-19,2013,Representation Order based on 2011 Census
+GE.43.2019,4300,Forty-Third General Election 2019,Quarante-Troisième Élection Générale 2019,2019-10-21,2013,Representation Order based on 2011 Census
