@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+
+# Jupyter and Python tooling
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+
+# Local outputs that are typically regenerated
+outputs/
+outputs_demographics/
