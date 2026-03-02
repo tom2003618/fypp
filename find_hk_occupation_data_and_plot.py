@@ -1,13 +1,18 @@
 from pathlib import Path
 import sys, json, re
 import urllib.request
+import urllib.parse
 import pandas as pd
 import matplotlib.pyplot as plt
 
-OUT_DIR = Path("outputs_demographics")
+base = Path(__file__).resolve().parent if "__file__" in globals() else Path.cwd().resolve()
+if not (base / "data").exists() and (base.parent / "data").exists():
+    base = base.parent
+OUT_DIR = base / "outputs_demographics"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 API = "https://open.canada.ca/data/en/api/3/action/package_search"
+EE_OCC_URL = "https://ircc.canada.ca/opendata-donneesouvertes/data/EN_ODP-EE_Admissions-Occ.xlsx"
 
 def http_get(url):
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
@@ -17,6 +22,108 @@ def http_get(url):
 def ckan_search(q, rows=100):
     url = f"{API}?q={urllib.parse.quote(q)}&rows={rows}"
     return json.loads(http_get(url).decode("utf-8"))
+
+def parse_num(x):
+    s = str(x).strip()
+    if s in {"", "nan", "NaN", "None", "--"}:
+        return 0.0
+    s = s.replace(",", "")
+    v = pd.to_numeric(s, errors="coerce")
+    return float(v) if pd.notna(v) else 0.0
+
+def parse_ee_matrix_format(ee_raw, years_req):
+    if ee_raw.shape[0] < 6 or ee_raw.shape[1] < 20:
+        return None
+
+    year_total_cols = {}
+    for idx, v in enumerate(ee_raw.iloc[3].tolist()):
+        if pd.isna(v):
+            continue
+        m = re.fullmatch(r"\s*(\d{4})\s*Total\s*", str(v))
+        if m:
+            year_total_cols[int(m.group(1))] = idx
+
+    if not all(y in year_total_cols for y in years_req):
+        return None
+
+    province_total_rows = []
+    for i in range(5, ee_raw.shape[0]):
+        label = str(ee_raw.iat[i, 0]).strip()
+        if not label or label.lower() == "nan":
+            continue
+        if (
+            label.endswith(" Total")
+            and label not in {"Total"}
+            and "All Canada" not in label
+            and "Occupation" not in label
+        ):
+            province_total_rows.append((i, label[:-6].strip()))
+
+    if not province_total_rows:
+        return None
+
+    rows = []
+    start = 5
+    for idx, province in province_total_rows:
+        block = ee_raw.iloc[start:idx]
+        for _, r in block.iterrows():
+            occ = str(r.iloc[1]).strip()
+            if not occ or occ.lower() == "nan":
+                continue
+            for y in years_req:
+                col = year_total_cols[y]
+                rows.append(
+                    {
+                        "Year": int(y),
+                        "Province": province,
+                        "Occupation": occ,
+                        "Admissions": parse_num(r.iloc[col]),
+                    }
+                )
+        start = idx + 1
+
+    if not rows:
+        return None
+
+    d = pd.DataFrame(rows)
+    d["Admissions"] = pd.to_numeric(d["Admissions"], errors="coerce").fillna(0.0)
+    return d
+
+def write_occ_outputs(out):
+    csv_path = OUT_DIR / "hk_main_occupations_2021_2025.csv"
+    png_path = OUT_DIR / "hk_main_occupations_2021_2025.png"
+    out.to_csv(csv_path, index=False, encoding="utf-8")
+
+    x = range(len(out))
+    w = 0.4
+    plt.figure(figsize=(12, 6))
+    plt.bar([i - w/2 for i in x], out["Y2021"].values, width=w, label="2021")
+    plt.bar([i + w/2 for i in x], out["Y2025"].values, width=w, label="2025")
+    plt.xticks(list(x), out["Occupation"].tolist(), rotation=60, ha="right")
+    plt.title("Hong Kong immigrants in Canada — main occupations (2021 vs 2025)")
+    plt.ylabel("Count")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(png_path, dpi=200)
+    plt.close()
+    return csv_path, png_path
+
+def build_proxy_occ_from_ee():
+    years_req = [2021, 2025]
+    ee_raw = pd.read_excel(EE_OCC_URL, header=None)
+    d = parse_ee_matrix_format(ee_raw, years_req)
+    if d is None or d.empty:
+        return None
+
+    c = d.groupby(["Year", "Occupation"], as_index=False)["Admissions"].sum()
+    w = c.pivot(index="Occupation", columns="Year", values="Admissions").fillna(0.0)
+    w = w.reset_index()
+    for y in years_req:
+        if y not in w.columns:
+            w[y] = 0.0
+    w = w.rename(columns={2021: "Y2021", 2025: "Y2025"})
+    w = w.sort_values("Y2025", ascending=False).head(20)
+    return w[["Occupation", "Y2021", "Y2025"]]
 
 def looks_like_occ(s):
     s = str(s).lower()
@@ -42,12 +149,14 @@ def find_candidate_resources():
     ]
     seen = set()
     resources = []
+    ckan_ok = False
     for q in queries:
         try:
             resp = ckan_search(q, rows=200)
+            ckan_ok = True
         except Exception as e:
-            print(f"CKAN search failed: {e}", file=sys.stderr)
-            sys.exit(1)
+            print(f"CKAN search warning: {e}", file=sys.stderr)
+            continue
         pkgs = resp.get("result", {}).get("results", [])
         for pkg in pkgs:
             for r in pkg.get("resources", []):
@@ -62,6 +171,17 @@ def find_candidate_resources():
                     continue
                 seen.add(key)
                 resources.append({"url": u, "name": name, "pkg": pkg.get("title", "")})
+
+    # Fallback URLs if CKAN API is blocked (WAF/HTML response).
+    fallback_urls = [EE_OCC_URL]
+    for u in fallback_urls:
+        key = (u, "fallback")
+        if key not in seen:
+            seen.add(key)
+            resources.append({"url": u, "name": "fallback", "pkg": "direct-url"})
+
+    if not ckan_ok:
+        print("CKAN API unavailable; using direct resource fallback.", file=sys.stderr)
     return resources
 
 def detect_hk_occ_table(df):
@@ -105,8 +225,15 @@ def extract_top_occ(df, occ_col, country_col, val_2021, val_2025):
 def main():
     resources = find_candidate_resources()
     if not resources:
-        print("No candidate resources found via CKAN search.", file=sys.stderr)
-        sys.exit(1)
+        proxy = build_proxy_occ_from_ee()
+        if proxy is None or proxy.empty:
+            print("No candidate resources found and EE proxy build failed.", file=sys.stderr)
+            sys.exit(1)
+        csv_path, png_path = write_occ_outputs(proxy)
+        print("FALLBACK_MODE=EE_PROXY")
+        print(csv_path)
+        print(png_path)
+        return
 
     checked = 0
     for r in resources:
@@ -153,22 +280,7 @@ def main():
                 if out.empty:
                     continue
 
-                csv_path = OUT_DIR / "hk_main_occupations_2021_2025.csv"
-                png_path = OUT_DIR / "hk_main_occupations_2021_2025.png"
-                out.to_csv(csv_path, index=False, encoding="utf-8")
-
-                x = range(len(out))
-                w = 0.4
-                plt.figure(figsize=(12, 6))
-                plt.bar([i - w/2 for i in x], out["Y2021"].values, width=w, label="2021")
-                plt.bar([i + w/2 for i in x], out["Y2025"].values, width=w, label="2025")
-                plt.xticks(list(x), out["Occupation"].tolist(), rotation=60, ha="right")
-                plt.title("Hong Kong immigrants in Canada — main occupations (2021 vs 2025)")
-                plt.ylabel("Count")
-                plt.legend()
-                plt.tight_layout()
-                plt.savefig(png_path, dpi=200)
-                plt.close()
+                csv_path, png_path = write_occ_outputs(out)
 
                 print("FOUND_RESOURCE_URL=" + url)
                 print("FOUND_SHEET=" + sh)
@@ -184,6 +296,14 @@ def main():
             print("Potential match (CSV) but extractor expects yearly total columns; please share columns head.", file=sys.stderr)
             print(url, file=sys.stderr)
             sys.exit(1)
+
+    proxy = build_proxy_occ_from_ee()
+    if proxy is not None and not proxy.empty:
+        csv_path, png_path = write_occ_outputs(proxy)
+        print("FALLBACK_MODE=EE_PROXY")
+        print(csv_path)
+        print(png_path)
+        return
 
     print("No public resource found that contains Hong Kong + Occupation + 2021/2025 in the same table.", file=sys.stderr)
     print("Checked resources:", checked, file=sys.stderr)
