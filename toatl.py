@@ -6,16 +6,27 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 DATASET_URL_2000_2021 = "https://www.sfu.ca/~aheard/elections/1867-present.html"
 DATASET_URL_2025 = "https://researchbriefings.files.parliament.uk/documents/CBP-10244/CBP-10244.pdf"
 
-INPUT_CSV = "canada_federal_vote_share_2000_2025.csv"
-OUT_DIR = "outputs"
+def find_project_root(marker):
+    here = Path.cwd().resolve()
+    script_dir = Path(__file__).resolve().parent if "__file__" in globals() else here
+    for candidate in [here, *here.parents, script_dir, *script_dir.parents]:
+        if (candidate / marker).exists():
+            return candidate
+    return here
+
+PROJECT_ROOT = find_project_root("canada_federal_vote_share_2000_2025.csv")
+
+INPUT_CSV = str(PROJECT_ROOT / "canada_federal_vote_share_2000_2025.csv")
+OUT_DIR = str(PROJECT_ROOT / "outputs")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-PROV_INPUT_CSV = "canada_province_votes_electors_2000_2025.csv"
-KAGGLE_DIR = "kaggle_canada_election"
+PROV_INPUT_CSV = str(PROJECT_ROOT / "canada_province_votes_electors_2000_2025.csv")
+KAGGLE_DIR = str(PROJECT_ROOT / "kaggle_canada_election")
 
 def canon_party(p):
     s = str(p).strip().lower()
@@ -290,4 +301,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -22,8 +22,88 @@ def pick_year_col(cols, year):
             return c
     return None
 
+def parse_num(x):
+    s = str(x).strip()
+    if s in {"", "nan", "NaN", "None", "--"}:
+        return 0.0
+    s = s.replace(",", "")
+    v = pd.to_numeric(s, errors="coerce")
+    return float(v) if pd.notna(v) else 0.0
+
+def write_top_occupations(df, years_req, scope_label, out_path):
+    out_rows = []
+    for y in years_req:
+        s = df[df["Year"] == y].groupby("Occupation", as_index=False)["Admissions"].sum()
+        s = s.sort_values("Admissions", ascending=False).head(20)
+        s.insert(0, "Year", y)
+        s.insert(0, "Scope", scope_label)
+        out_rows.append(s)
+    out = pd.concat(out_rows, ignore_index=True)
+    out.to_csv(out_path, index=False, encoding="utf-8")
+
+def parse_ee_matrix_format(ee_raw, years_req):
+    if ee_raw.shape[0] < 6 or ee_raw.shape[1] < 20:
+        return None
+
+    year_total_cols = {}
+    for idx, v in enumerate(ee_raw.iloc[3].tolist()):
+        if pd.isna(v):
+            continue
+        m = re.fullmatch(r"\s*(\d{4})\s*Total\s*", str(v))
+        if m:
+            year_total_cols[int(m.group(1))] = idx
+
+    if not all(y in year_total_cols for y in years_req):
+        return None
+
+    province_total_rows = []
+    for i in range(5, ee_raw.shape[0]):
+        label = str(ee_raw.iat[i, 0]).strip()
+        if not label or label.lower() == "nan":
+            continue
+        if (
+            label.endswith(" Total")
+            and label not in {"Total"}
+            and "All Canada" not in label
+            and "Occupation" not in label
+        ):
+            province_total_rows.append((i, label[:-6].strip()))
+
+    if not province_total_rows:
+        return None
+
+    rows = []
+    start = 5
+    for idx, province in province_total_rows:
+        block = ee_raw.iloc[start:idx]
+        for _, r in block.iterrows():
+            occ = str(r.iloc[1]).strip()
+            if not occ or occ.lower() == "nan":
+                continue
+            for y in years_req:
+                col = year_total_cols[y]
+                rows.append(
+                    {
+                        "Year": int(y),
+                        "Province": province,
+                        "Occupation": occ,
+                        "Admissions": parse_num(r.iloc[col]),
+                    }
+                )
+        start = idx + 1
+
+    if not rows:
+        return None
+
+    d = pd.DataFrame(rows)
+    d["Admissions"] = pd.to_numeric(d["Admissions"], errors="coerce").fillna(0.0)
+    return d
+
 def main():
-    out_dir = Path("outputs_demographics")
+    base = Path(__file__).resolve().parent if "__file__" in globals() else Path.cwd().resolve()
+    if not (base / "data").exists() and (base.parent / "data").exists():
+        base = base.parent
+    out_dir = base / "outputs_demographics"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     pr_citz_url = "https://www.ircc.canada.ca/opendata-donneesouvertes/data/EN_ODP-PR-Citz.xlsx"
@@ -80,6 +160,7 @@ def main():
             val_col = sorted(num_candidates, reverse=True)[0][1]
 
         d = ee[[year_col, prov_col, occ_col, val_col]].copy()
+        d = d.rename(columns={prov_col: "Province", occ_col: "Occupation"})
         d["Year"] = pd.to_numeric(d[year_col], errors="coerce")
         d["Admissions"] = pd.to_numeric(d[val_col], errors="coerce").fillna(0)
         d = d.dropna(subset=["Year"])
@@ -89,22 +170,10 @@ def main():
             if (d["Year"] == y).sum() == 0:
                 print(f"EE file has no rows for year {y}", file=sys.stderr)
 
-        def top_occ(df, label, path):
-            out_rows = []
-            for y in years_req:
-                s = df[df["Year"] == y].groupby(occ_col, as_index=False)["Admissions"].sum()
-                s = s.sort_values("Admissions", ascending=False).head(20)
-                s = s.rename(columns={occ_col: "Occupation"})
-                s.insert(0, "Year", y)
-                s.insert(0, "Scope", label)
-                out_rows.append(s)
-            out = pd.concat(out_rows, ignore_index=True)
-            out.to_csv(path, index=False, encoding="utf-8")
+        write_top_occupations(d, years_req, "Canada_total_from_EE", out_dir / "ee_top_occupations_canada_2021_2025.csv")
 
-        top_occ(d, "Canada_total_from_EE", out_dir / "ee_top_occupations_canada_2021_2025.csv")
-
-        d4 = d[d[prov_col].isin(PROVINCES)].copy()
-        top_occ(d4, "AB_BC_ON_QC_total_from_EE", out_dir / "ee_top_occupations_AB_BC_ON_QC_2021_2025.csv")
+        d4 = d[d["Province"].isin(PROVINCES)].copy()
+        write_top_occupations(d4, years_req, "AB_BC_ON_QC_total_from_EE", out_dir / "ee_top_occupations_AB_BC_ON_QC_2021_2025.csv")
 
         print("Wrote:")
         print(out_dir / "hk_pr_counts_2021_2025.csv")
@@ -128,19 +197,24 @@ def main():
             mm = m.melt(id_vars=[c for c in [prov_col, occ_col] if c is not None], value_vars=year_cols_wide, var_name="Year", value_name="Admissions")
             mm["Year"] = pd.to_numeric(mm["Year"], errors="coerce").astype("Int64")
             mm["Admissions"] = pd.to_numeric(mm["Admissions"], errors="coerce").fillna(0)
-            out_rows = []
-            for y in years_req:
-                s = mm[mm["Year"] == y].groupby(occ_col, as_index=False)["Admissions"].sum()
-                s = s.sort_values("Admissions", ascending=False).head(20)
-                s = s.rename(columns={occ_col: "Occupation"})
-                s.insert(0, "Year", y)
-                s.insert(0, "Scope", scope_label)
-                out_rows.append(s)
-            out = pd.concat(out_rows, ignore_index=True)
-            out.to_csv(out_path, index=False, encoding="utf-8")
+            mm = mm.rename(columns={prov_col: "Province", occ_col: "Occupation"})
+            write_top_occupations(mm, years_req, scope_label, out_path)
 
         melt_and_top("Canada_total_from_EE", None, out_dir / "ee_top_occupations_canada_2021_2025.csv")
         melt_and_top("AB_BC_ON_QC_total_from_EE", PROVINCES, out_dir / "ee_top_occupations_AB_BC_ON_QC_2021_2025.csv")
+
+        print("Wrote:")
+        print(out_dir / "hk_pr_counts_2021_2025.csv")
+        print(out_dir / "ee_top_occupations_canada_2021_2025.csv")
+        print(out_dir / "ee_top_occupations_AB_BC_ON_QC_2021_2025.csv")
+        return
+
+    ee_raw = pd.read_excel(ee_occ_url, header=None)
+    matrix_df = parse_ee_matrix_format(ee_raw, years_req)
+    if matrix_df is not None:
+        write_top_occupations(matrix_df, years_req, "Canada_total_from_EE", out_dir / "ee_top_occupations_canada_2021_2025.csv")
+        d4 = matrix_df[matrix_df["Province"].isin(PROVINCES)].copy()
+        write_top_occupations(d4, years_req, "AB_BC_ON_QC_total_from_EE", out_dir / "ee_top_occupations_AB_BC_ON_QC_2021_2025.csv")
 
         print("Wrote:")
         print(out_dir / "hk_pr_counts_2021_2025.csv")
