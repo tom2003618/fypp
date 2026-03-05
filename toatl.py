@@ -28,6 +28,18 @@ os.makedirs(OUT_DIR, exist_ok=True)
 PROV_INPUT_CSV = str(PROJECT_ROOT / "canada_province_votes_electors_2000_2025.csv")
 KAGGLE_DIR = str(PROJECT_ROOT / "kaggle_canada_election")
 
+def display_images_if_notebook(paths):
+    try:
+        from IPython import get_ipython
+        from IPython.display import Image, display
+    except Exception:
+        return
+    if get_ipython() is None:
+        return
+    for p in paths:
+        if os.path.exists(p):
+            display(Image(filename=p))
+
 def canon_party(p):
     s = str(p).strip().lower()
     s = re.sub(r"\s+", " ", s)
@@ -164,6 +176,68 @@ def heatmap_single_year(df_clean, year, order):
     plt.savefig(os.path.join(OUT_DIR, f"fig3_heatmap_{year}.png"), dpi=160)
     plt.close()
 
+def predict_2025_from_pre2025(df_clean, parties, target_year=2025):
+    wide = df_clean.pivot(index="Year", columns="Party", values="VoteShare").fillna(0.0)
+    train_years = sorted([y for y in wide.index.tolist() if int(y) < int(target_year)])
+    if len(train_years) < 2:
+        raise RuntimeError("Need at least two pre-2025 election years to build a trend model.")
+
+    x = np.array(train_years, dtype=float)
+    preds_raw = {}
+    for party in parties:
+        if party not in wide.columns:
+            continue
+        y = wide.loc[train_years, party].astype(float).values
+        if len(np.unique(x)) >= 2:
+            slope, intercept = np.polyfit(x, y, 1)
+            pred = slope * float(target_year) + intercept
+        else:
+            pred = float(y[-1])
+        preds_raw[party] = max(0.0, float(pred))
+
+    raw_total = sum(preds_raw.values())
+    if raw_total > 0:
+        preds_norm = {k: (v / raw_total) * 100.0 for k, v in preds_raw.items()}
+    else:
+        n = max(1, len(preds_raw))
+        preds_norm = {k: 100.0 / n for k in preds_raw}
+
+    rows = []
+    for party in preds_raw:
+        actual = float(wide.at[target_year, party]) if target_year in wide.index and party in wide.columns else np.nan
+        pred_raw = preds_raw[party]
+        pred_norm = preds_norm[party]
+        rows.append(
+            {
+                "Party": party,
+                "Predicted_2025_raw": pred_raw,
+                "Predicted_2025": pred_norm,
+                "Actual_2025": actual,
+                "Error": pred_norm - actual if pd.notna(actual) else np.nan,
+                "AbsError": abs(pred_norm - actual) if pd.notna(actual) else np.nan,
+            }
+        )
+
+    out = pd.DataFrame(rows)
+    out = out.sort_values("Actual_2025", ascending=False).reset_index(drop=True)
+    return out
+
+def plot_prediction_vs_actual(comp_df, out_png):
+    d = comp_df.sort_values("Actual_2025", ascending=False).copy()
+    x = np.arange(len(d))
+    w = 0.38
+    plt.figure(figsize=(11, 5.5))
+    plt.bar(x - w / 2, d["Predicted_2025"].values, width=w, label="Predicted 2025 (trained on <2025)")
+    plt.bar(x + w / 2, d["Actual_2025"].values, width=w, label="Actual 2025")
+    plt.xticks(x, d["Party"].tolist(), rotation=25, ha="right")
+    plt.ylabel("Vote share (%)")
+    plt.title("2025 vote share: predicted (pre-2025 trend) vs actual")
+    plt.grid(axis="y", linestyle="--", alpha=0.4)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(out_png, dpi=160)
+    plt.close()
+
 def main():
     df = pd.read_csv(INPUT_CSV)
 
@@ -195,6 +269,13 @@ def main():
     order = ["Liberal", "Conservative", "NDP", "Bloc Québécois", "Green", "People's", "Others"]
     wide = df_clean.pivot(index="Year", columns="Party", values="VoteShare").fillna(0)
     wide = wide.reindex(columns=[c for c in order if c in wide.columns])
+
+    model_parties = [c for c in order if c in wide.columns]
+    pred_cmp = predict_2025_from_pre2025(df_clean, model_parties, target_year=2025)
+    pred_csv = os.path.join(OUT_DIR, "prediction_2025_vs_actual.csv")
+    pred_cmp.to_csv(pred_csv, index=False)
+    pred_png = os.path.join(OUT_DIR, "fig5_predicted_vs_actual_2025.png")
+    plot_prediction_vs_actual(pred_cmp, pred_png)
 
     ax = wide.plot(figsize=(11, 5))
     ax.set_xlabel("Year")
@@ -285,16 +366,24 @@ def main():
     plt.savefig(os.path.join(OUT_DIR, "fig4_votes_vs_electors_by_province.png"), dpi=160)
     plt.close()
 
+    image_paths = [
+        os.path.join(OUT_DIR, "fig1_trend.png"),
+        os.path.join(OUT_DIR, "fig2_bar_2025.png"),
+        os.path.join(OUT_DIR, "fig3_heatmap_2021.png"),
+        os.path.join(OUT_DIR, "fig3_heatmap_2025.png"),
+        os.path.join(OUT_DIR, "fig4_votes_vs_electors_by_province.png"),
+        pred_png,
+    ]
+
     print("Saved:")
-    print(os.path.join(OUT_DIR, "fig1_trend.png"))
-    print(os.path.join(OUT_DIR, "fig2_bar_2025.png"))
-    print(os.path.join(OUT_DIR, "fig3_heatmap_2021.png"))
-    print(os.path.join(OUT_DIR, "fig3_heatmap_2025.png"))
-    print(os.path.join(OUT_DIR, "fig4_votes_vs_electors_by_province.png"))
+    for p in image_paths:
+        print(p)
     print(os.path.join(OUT_DIR, "national_vote_share_clean.csv"))
     print(os.path.join(OUT_DIR, "national_vote_share_sumcheck.csv"))
+    print(pred_csv)
     if os.path.exists(os.path.join(OUT_DIR, "province_votes_electors_from_kaggle.csv")):
         print(os.path.join(OUT_DIR, "province_votes_electors_from_kaggle.csv"))
+    display_images_if_notebook(image_paths)
     print("Dataset URLs:")
     print(DATASET_URL_2000_2021)
     print(DATASET_URL_2025)
