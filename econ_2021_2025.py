@@ -1,5 +1,7 @@
 from pathlib import Path
+import shutil
 import sys
+import time
 import urllib.request
 import zipfile
 import pandas as pd
@@ -17,6 +19,11 @@ PIDS = {
 }
 
 URL_FMT = "https://www150.statcan.gc.ca/n1/tbl/csv/{pid}-eng.zip"
+PROJECT_MARKERS = (
+    ".git",
+    "econ_2021_2025.py",
+    "canada_federal_vote_share_2000_2025.csv",
+)
 
 def col_like(cols, *tokens):
     toks = [t.lower() for t in tokens]
@@ -60,14 +67,71 @@ def find_dim_col(df, needle):
             return c
     return None
 
-def download_zip(pid, path):
+def find_project_root():
+    start = Path(__file__).resolve().parent if "__file__" in globals() else Path.cwd().resolve()
+    for candidate in [start, *start.parents]:
+        if any((candidate / marker).exists() for marker in PROJECT_MARKERS):
+            return candidate
+    return start
+
+def cache_search_order(project_root):
+    notebook_root = project_root / "notebooks"
+    candidates = [
+        project_root / "data" / "statcan_cache",
+        notebook_root / "data" / "statcan_cache",
+    ]
+    ordered = []
+    for candidate in candidates:
+        if candidate not in ordered:
+            ordered.append(candidate)
+    return ordered
+
+def download_zip(pid, path, retries=3, timeout=120):
     if path.exists():
-        return
+        return path
     path.parent.mkdir(parents=True, exist_ok=True)
     url = URL_FMT.format(pid=pid)
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=180) as r:
-        path.write_bytes(r.read())
+    last_error = None
+
+    for attempt in range(1, retries + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                path.write_bytes(r.read())
+            if not zipfile.is_zipfile(path):
+                raise RuntimeError(f"Downloaded file is not a valid zip: {path}")
+            return path
+        except Exception as exc:
+            last_error = exc
+            if path.exists():
+                path.unlink()
+            if attempt < retries:
+                time.sleep(min(2 ** (attempt - 1), 5))
+
+    raise RuntimeError(
+        f"Failed to download Statistics Canada table {pid} after {retries} attempts: {last_error}"
+    ) from last_error
+
+def ensure_zip(pid, cache_dirs):
+    filename = f"{pid}-eng.zip"
+    for cache_dir in cache_dirs:
+        candidate = cache_dir / filename
+        if candidate.exists():
+            return candidate
+
+    primary = cache_dirs[0]
+    downloaded = download_zip(pid, primary / filename)
+
+    for cache_dir in cache_dirs[1:]:
+        mirror = cache_dir / filename
+        if not mirror.exists():
+            mirror.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                shutil.copy2(downloaded, mirror)
+            except OSError:
+                pass
+
+    return downloaded
 
 def load_zip_csv(zip_path):
     with zipfile.ZipFile(zip_path, "r") as z:
@@ -264,19 +328,19 @@ def grouped_bar(ax, df, ycol, title, ylabel, years):
     ax.legend()
 
 def main():
-    base = Path(__file__).resolve().parent
-    cache = base / "data" / "statcan_cache"
+    base = find_project_root()
+    cache_dirs = cache_search_order(base)
+    cache_dirs[0].mkdir(parents=True, exist_ok=True)
     out_dir = base / "outputs_demographics"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    for pid in PIDS.values():
-        download_zip(pid, cache / f"{pid}-eng.zip")
+    resolved = {pid: ensure_zip(pid, cache_dirs) for pid in PIDS.values()}
 
-    pop_raw = load_zip_csv(cache / f"{PIDS['pop']}-eng.zip")
-    gdp_raw = load_zip_csv(cache / f"{PIDS['gdp']}-eng.zip")
-    unemp_raw = load_zip_csv(cache / f"{PIDS['unemp']}-eng.zip")
-    wage_raw = load_zip_csv(cache / f"{PIDS['wage']}-eng.zip")
-    vac_raw = load_zip_csv(cache / f"{PIDS['vac']}-eng.zip")
+    pop_raw = load_zip_csv(resolved[PIDS['pop']])
+    gdp_raw = load_zip_csv(resolved[PIDS['gdp']])
+    unemp_raw = load_zip_csv(resolved[PIDS['unemp']])
+    wage_raw = load_zip_csv(resolved[PIDS['wage']])
+    vac_raw = load_zip_csv(resolved[PIDS['vac']])
 
     pop = build_population(pop_raw)
     gdp = build_gdp(gdp_raw)
