@@ -1,0 +1,482 @@
+
+<!DOCTYPE html>
+<html lang="en" xml:lang="en">
+<head>
+<meta charset="iso-8859-1" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dcterms.issued" content="2023-10-31">
+<meta name="dcterms.language" content="eng"> 
+<meta name="dcterms.creator" content="Elections Canada"> 
+<meta name="dcterms.accessRights" content="2"> 
+<meta name="dcterms.service" content="Elections">
+<link href="/templates/styles/style.css" rel="stylesheet" type="text/css" media="all">
+<!--[if lt IE 9]><link rel="stylesheet" type="text/css" href="templates/styles/ie.css"><![endif]-->
+<link href="/templates/styles/print.css" rel="stylesheet" type="text/css" media="print">
+<link href="/templates/styles/responsive.css" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+<script src="/templates/scripts/jquery-3.5.1.min.js"></script>
+<script src="/templates/scripts/world.js"></script>
+<script src="//assets.adobedtm.com/be5dfd287373/bb72b7edd313/launch-e34f760eaec8.min.js"></script>
+<title>Turnout by age &ndash; Estimation of Voter Turnout by Age Group and Gender at the 2021 General Election &ndash; Elections Canada</title>
+<meta name="dcterms.title" content="Turnout by age - Estimation of Voter Turnout by Age Group and Gender at the 2021 General Election" />
+<meta property="og:site_name" content="Elections Canada" />
+<meta property="og:title" content="Turnout by age - Estimation of Voter Turnout by Age Group and Gender at the 2021 General Election" />
+<meta property="og:description" content="---" />
+<meta property="og:image" content="http://www.elections.ca/templates/images/facebook/elections.png" />
+
+<link href="/templates/styles/details-dev.css" rel="stylesheet">
+<!--[if lte IE 9]><link href="/templates/styles/details-dev-ie.css" rel="stylesheet" /><![endif]-->
+<link href="/templates/styles/font-awesome-4.7.0/css/font-awesome.min.css" rel="stylesheet">
+<script src="/templates/scripts/ie-details-ec.js"></script>
+<style type="text/css">
+	.forh2 {color: #8B2942;}	
+</style>
+	
+</head>
+
+<body>
+<!--BEGIN - DIV.WRAP -->
+<div id="wrap">
+	
+
+<!--BEGIN - DIV.HEADER -->
+<div id="header">
+	<header>
+		<div id="headercol1">
+			<div id="logo">
+				<a href="/home.aspx">
+					<img src="/templates/images/logo2.jpg" alt="Elections Canada logo" /><span class="hidden">Elections Canada Home</span>
+				</a>
+			</div>
+		</div>
+		<div id="headercol2">
+			<div id="searchbar">
+				<form action="https://www.canada.ca/en/elections-canada/search.html" accept-charset="UTF-8" method="get" role="search"> 
+					<p class="nopadnomarg">
+						<label for="q" class="hidden">Search the site</label>	
+						<input type="text" id="q"  name="q" class="styled" />
+						<input value="Search" class="button" type="submit" name="send"  role="button"/>
+					</p>
+				</form>
+				<div id="navaid2">
+					<a href="#top"><span>Skip to content</span></a>
+				</div>
+			</div>
+		</div>
+		<div id="headercol3">
+			<nav id="menubar" aria-label="Quick links">
+				<ul id="navlist">
+					<li><a href="/home.aspx">Home</a></li>
+					<li><a href="/content.aspx?section=abo&amp;document=index&amp;lang=e">About Us</a></li>
+					<li><a href="/content.aspx?section=cont&amp;document=index&amp;lang=e">Contact Us</a></li>
+					<li class="hidden"><a href="#custom-launcher">Chat with us</a></li>
+					<li class="last"><a href="https://www.elections.ca/content.aspx?dir=rec/eval/pes2021/evt&amp;document=p5&amp;lang=f&amp;section=res" lang="fr" xml:lang="fr">Fran&#231;ais</a></li>
+				</ul>
+			</nav>
+		</div>
+		<div class="clearall"></div>
+	</header>
+	<a href="#topnav" class="topnav-link"><img src="images/openicon.png" alt="open" /> Site Menu</a>
+	  <nav id="topnav" aria-label="Main">
+		<ul id="mainmenu">
+			<li><a href="/content.aspx?section=vot&amp;document=index&amp;lang=e">Voters
+				<span class="small">Find all you need to know about registering and voting</span></a></li>
+			<li><a href="/content.aspx?section=ele&amp;document=index&amp;lang=e">Elections
+				<span class="small">Get info and data on federal elections</span></a></li>
+			<li class="current" ><a href="/content.aspx?section=res&amp;document=index&amp;lang=e">Resource Centre
+				<span class="small">Learn about election laws, electoral districts, our research and more</span></a></li>
+			<li><a href="/content.aspx?section=med&amp;document=index&amp;lang=e">Media
+				<span class="small">See our news releases and other media resources</span></a></li>
+			<li><a href="/content.aspx?section=emp&amp;document=index&amp;lang=e">Employment
+				<span class="small">Learn about working for Elections Canada and how to apply</span></a></li>
+			<li><a href="/content.aspx?section=fin&amp;&amp;document=index&amp;lang=e">Political Financing
+				<span class="small">Learn about political financing,  view financial reports</span></a></li>
+			<li><a href="/content.aspx?section=pol&amp;&amp;document=index&amp;lang=e">Political Entities
+				<span class="small">Access resources for parties, candidates, third parties and more</span></a></li>
+		</ul>
+	</nav>
+</div>
+<!--END - DIV.HEADER -->
+
+
+		
+	<!-- <form method="post" action="./content.aspx?dir=rec%2feval%2fpes2021%2fevt&amp;document=p5&amp;lang=e&amp;section=res" id="form1">
+<div class="aspNetHidden">
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="/wEPDwULLTE5MzI3NzU5ODYPZBYCZg9kFgICAg9kFgICAg9kFgICAQ8WAh4EVGV4dAXLDjx1bCBjbGFzcz0ibWVudWdyb3VwIj48bGk+PGEgaHJlZj0iY29udGVudC5hc3B4P3NlY3Rpb249cmVzJmFtcDtkaXI9bG9pJmFtcDtkb2N1bWVudD1pbmRleCZhbXA7bGFuZz1lIj5MZWdpc2xhdGlvbjwvYT48L2xpPgo8bGk+PGEgaHJlZj0iY29udGVudC5hc3B4P3NlY3Rpb249cmVzJmFtcDtkaXI9Z3VpJmFtcDtkb2N1bWVudD1pbmRleCZhbXA7bGFuZz1lIj5PcGluaW9ucywgR3VpZGVsaW5lcyBhbmQgSW50ZXJwcmV0YXRpb25zIDwvYT48L2xpPgo8bGk+PGEgaHJlZj0iY29udGVudC5hc3B4P3NlY3Rpb249cmVzJmFtcDtkaXI9ZGlzJmFtcDtkb2N1bWVudD1pbmRleCZhbXA7bGFuZz1lIj5FbGVjdG9GYWN0czwvYT48L2xpPgo8bGk+PGEgaHJlZj0iY29udGVudC5hc3B4P3NlY3Rpb249cmVzJmFtcDtkaXI9cGNhJmFtcDtkb2N1bWVudD1pbmRleCZhbXA7bGFuZz1lIj5PZmZpY2lhbCBFbGVjdGlvbnMgQ2FuYWRhIENvbW11bmljYXRpb24gUHJvZHVjdHM8L2E+PC9saT4KPGxpPjxhIGhyZWY9ImNvbnRlbnQuYXNweD9zZWN0aW9uPXJlcyZhbXA7ZGlyPXJlYyZhbXA7ZG9jdW1lbnQ9aW5kZXgmYW1wO2xhbmc9ZSI+UmVzZWFyY2g8L2E+Cjx1bCBjbGFzcz0ibWVudWdyb3VwIj48bGk+PGEgaHJlZj0iY29udGVudC5hc3B4P3NlY3Rpb249cmVzJmFtcDtkaXI9cmVjL2V2YWwmYW1wO2RvY3VtZW50PWluZGV4JmFtcDtsYW5nPWUiPkVsZWN0aW9uIFJlc2VhcmNoPC9hPjwvbGk+CjxsaT48YSBocmVmPSJjb250ZW50LmFzcHg/c2VjdGlvbj1yZXMmYW1wO2Rpcj1yZWMvcGFydCZhbXA7ZG9jdW1lbnQ9aW5kZXgmYW1wO2xhbmc9ZSI+UmVzZWFyY2ggb24gRWxlY3RvcmFsIFBhcnRpY2lwYXRpb248L2E+PC9saT4KPGxpPjxhIGhyZWY9ImNvbnRlbnQuYXNweD9zZWN0aW9uPXJlcyZhbXA7ZGlyPXJlYy9yZWcmYW1wO2RvY3VtZW50PWluZGV4JmFtcDtsYW5nPWUiPkFkbWluaXN0cmF0aW9uIG9mIEVsZWN0aW9uczwvYT48L2xpPgo8L3VsPjwvbGk+CjxsaT48YSBocmVmPSJjb250ZW50LmFzcHg/c2VjdGlvbj1yZXMmYW1wO2Rpcj1jaXImYW1wO2RvY3VtZW50PWluZGV4JmFtcDtsYW5nPWUiPkVsZWN0b3JhbCBEaXN0cmljdHM8L2E+PC9saT4KPGxpPjxhIGhyZWY9ImNvbnRlbnQuYXNweD9zZWN0aW9uPXJlcyZhbXA7ZGlyPXJlcCZhbXA7ZG9jdW1lbnQ9aW5kZXgmYW1wO2xhbmc9ZSI+UmVwb3J0czwvYT48L2xpPgo8bGk+PGEgaHJlZj0iY29udGVudC5hc3B4P3NlY3Rpb249cmVzJmFtcDtkaXI9cG9saSZhbXA7ZG9jdW1lbnQ9aW5kZXgmYW1wO2xhbmc9ZSI+UmVndWxhdG9yeSBQb2xpY3k8L2E+PC9saT4KPGxpPjxhIGhyZWY9ImNvbnRlbnQuYXNweD9zZWN0aW9uPXJlcyZhbXA7ZGlyPWNvbnMmYW1wO2RvY3VtZW50PWluZGV4JmFtcDtsYW5nPWUiPkNvbnN1bHRhdGlvbnM8L2E+PC9saT4KPGxpPjxhIGhyZWY9ImNvbnRlbnQuYXNweD9zZWN0aW9uPXJlcyZhbXA7ZGlyPXB1YiZhbXA7ZG9jdW1lbnQ9aW5kZXgmYW1wO2xhbmc9ZSI+UHVibGljYXRpb25zPC9hPjwvbGk+CjxsaT48YSBocmVmPSJjb250ZW50LmFzcHg/c2VjdGlvbj1yZXMmYW1wO2Rpcj1pYWQmYW1wO2RvY3VtZW50PWluZGV4JmFtcDtsYW5nPWUiPkludGVybmF0aW9uYWwgRWxlY3RvcmFsIFJlc291cmNlczwvYT48L2xpPgo8bGk+PGEgaHJlZj0iY29udGVudC5hc3B4P3NlY3Rpb249cmVzJmFtcDtkaXI9aGlzJmFtcDtkb2N1bWVudD1pbmRleCZhbXA7bGFuZz1lIj5BIEhpc3Rvcnkgb2YgdGhlIFZvdGUgaW4gQ2FuYWRhPC9hPjwvbGk+CjxsaT48YSBocmVmPSJjb250ZW50LmFzcHg/c2VjdGlvbj1yZXMmYW1wO2Rpcj1nbG8mYW1wO2RvY3VtZW50PWluZGV4JmFtcDtsYW5nPWUiPkdsb3NzYXJ5PC9hPjwvbGk+CjwvdWw+DQpkZDXRYus/CLqP7W9wIJbWoeNnbOfsWYetBrX4RhoQ5P+8" />
+</div>
+
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="65E7F3AF" />
+</div>
+	 -->
+
+
+		
+		
+		<a id="msId" class="leftnav-link" href="#leftnav" aria-label="Secondary menu"><img src="images/openicon.png" alt="open" /> Secondary menu</a>
+
+		<div id="navbox">
+			<div id="rootname-bg">
+				<div id="rootname"><h2>Resource Centre</h2></div>
+			</div>				
+			<div id="leftnav">
+				<div class="leftnav">
+					<nav aria-labelledby="msId">
+						
+    <ul class="menugroup"><li><a href="content.aspx?section=res&amp;dir=loi&amp;document=index&amp;lang=e">Legislation</a></li>
+<li><a href="content.aspx?section=res&amp;dir=gui&amp;document=index&amp;lang=e">Opinions, Guidelines and Interpretations </a></li>
+<li><a href="content.aspx?section=res&amp;dir=dis&amp;document=index&amp;lang=e">ElectoFacts</a></li>
+<li><a href="content.aspx?section=res&amp;dir=pca&amp;document=index&amp;lang=e">Official Elections Canada Communication Products</a></li>
+<li><a href="content.aspx?section=res&amp;dir=rec&amp;document=index&amp;lang=e">Research</a>
+<ul class="menugroup"><li><a href="content.aspx?section=res&amp;dir=rec/eval&amp;document=index&amp;lang=e">Election Research</a></li>
+<li><a href="content.aspx?section=res&amp;dir=rec/part&amp;document=index&amp;lang=e">Research on Electoral Participation</a></li>
+<li><a href="content.aspx?section=res&amp;dir=rec/reg&amp;document=index&amp;lang=e">Administration of Elections</a></li>
+</ul></li>
+<li><a href="content.aspx?section=res&amp;dir=cir&amp;document=index&amp;lang=e">Electoral Districts</a></li>
+<li><a href="content.aspx?section=res&amp;dir=rep&amp;document=index&amp;lang=e">Reports</a></li>
+<li><a href="content.aspx?section=res&amp;dir=poli&amp;document=index&amp;lang=e">Regulatory Policy</a></li>
+<li><a href="content.aspx?section=res&amp;dir=cons&amp;document=index&amp;lang=e">Consultations</a></li>
+<li><a href="content.aspx?section=res&amp;dir=pub&amp;document=index&amp;lang=e">Publications</a></li>
+<li><a href="content.aspx?section=res&amp;dir=iad&amp;document=index&amp;lang=e">International Electoral Resources</a></li>
+<li><a href="content.aspx?section=res&amp;dir=his&amp;document=index&amp;lang=e">A History of the Vote in Canada</a></li>
+<li><a href="content.aspx?section=res&amp;dir=glo&amp;document=index&amp;lang=e">Glossary</a></li>
+</ul>
+
+
+					</nav>
+				</div>
+			</div>
+		</div>								
+	
+    <main><div id="content-main"><nav id="breadcrumbs" aria-label="breadcrumbs" ><ol itemscope itemtype="https://schema.org/BreadcrumbList">
+<li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a  itemprop="item" href="home.aspx"><span itemprop="name"> Home</span></a><meta itemprop="position" content="1" /></li>
+<li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a itemprop="item" href="content.aspx?section=res&amp;document=index&amp;lang=e"><span itemprop="name"> Resource Centre</span></a><meta itemprop="position" content="2" /></li>
+<li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a itemprop="item" href="content.aspx?section=res&amp;dir=rec&amp;document=index&amp;lang=e"><span itemprop="name"> Research</span></a><meta itemprop="position" content="3" /></li>
+<li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a itemprop="item" href="content.aspx?section=res&amp;dir=rec/eval&amp;document=index&amp;lang=e"><span itemprop="name"> Election Research</span></a><meta itemprop="position" content="4" /></li>
+<li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a itemprop="item" href="content.aspx?section=res&amp;dir=rec/eval/pes2021&amp;document=index&amp;lang=e"><span itemprop="name"> 44th General Election Evaluations</span></a><meta itemprop="position" content="5" /></li>
+<li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a itemprop="item" href="content.aspx?section=res&amp;dir=rec/eval/pes2021/evt&amp;document=index&amp;lang=e"><span itemprop="name"> Estimation of Voter Turnout by Age Group and Gender at the 2021 General Election</span></a><meta itemprop="position" content="6" /></li>
+<li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="item"><span itemprop="name"> Turnout by age</span><meta itemprop="position" content="7" /></span></li>
+</ol>
+</nav><h1 id="top">Turnout by age<span class='docSubtitle' role='doc-subtitle'><span class='hidden'> &ndash; </span>Estimation of Voter Turnout by Age Group and Gender at the 2021 General Election</span></h1>
+
+<p>The report breaks down age into the following groups:</p>
+
+<ul>
+	<li>18-24</li>
+
+	<li>25-34</li>
+
+	<li>35-44</li>
+
+	<li>45-54</li>
+
+	<li>55-64</li>
+
+	<li>65-74</li>
+
+	<li>75+</li>
+</ul>
+
+<p>The report further breaks down the category of 18-24-year-olds into "1<sup>st</sup> time" and "not 1<sup>st</sup> time" voters. The "1st time" category includes youth eligible to vote federally for the first time. For the 2021 general election, this includes those born between October&nbsp;22,&nbsp;2001, and September&nbsp;20,&nbsp;2003. The category "not 1st time" includes those youth under 25 years old who were previously eligible to vote federally. For the 2021 general election, this includes those born between September&nbsp;21,&nbsp;1996, and October&nbsp;21,&nbsp;2001.</p>
+
+<p>Previous studies by Elections Canada<sup id="ftnref4"><a class="fn-lnk" href="#ftn4"><span class="hidden">footnote </span>4</a></sup> have shown youth have the largest gap between registered electors and eligible electors. Relatively fewer eligible electors in the 18-24 age group would have been sent a voter information card telling them when and where to vote during the 2021 general election; this could explain in part the lower turnout rates for this age group.</p>
+
+<h2 id="sec1" class="forh2">Youth turnout keeps decreasing after peak in 2015, and women still voted at higher rates than men</h2>
+
+<p>For the 2021 general election, the breakdown of participation by age group is shown in Figure 4.</p>
+
+<p>Turnout gradually increases with age from 46.7% for ages 18–24 to 74.9% for ages 65–74, and then declines to 65.9% for those 75 and older. This pattern has been seen in every general election since 2004.</p>
+
+<figure>
+<figcaption class="bold">Figure 4: Voter Turnout by Age Group, 2021 General Election</figcaption>
+<p class="alignCenter"><img src="res/rec/eval/pes2021/evt/images/fig4_e.png" alt="Figure 4: Voter Turnout by Age Group, 2021 General Election"></p>
+<details class="newlongdesc">
+<summary><span class="newlongdescIE">Text version of "Figure 4: Voter Turnout by Age Group, 2021 General Election"</span></summary><br>
+<table class="width90">
+<caption class="hidden">Figure 4: Voter Turnout by Age Group, 2021 General Election</caption>
+	<thead><tr>
+		<th scope="col">Age Group</th>
+		<th scope="col">Turnout</th></tr></thead><tr><td>1st time*</td>
+		<td class="alignRight">44.7%</td>
+	</tr>
+	<tr>
+		<td>not 1st time*</td>
+		<td class="alignRight">47.4%</td>
+	</tr>
+	<tr>
+		<td>18&ndash;24</td>
+		<td class="alignRight">46.7%</td>
+	</tr>
+	<tr>
+		<td>25&ndash;34</td>
+		<td class="alignRight">52.8%</td>
+	</tr>
+	<tr>
+		<td>35&ndash;44</td>
+		<td class="alignRight">59.0%</td>
+	</tr>
+	<tr>
+		<td>45&ndash;54</td>
+		<td class="alignRight">63.8%</td>
+	</tr>
+	<tr>
+		<td>55&ndash;64</td>
+		<td class="alignRight">68.3%</td>
+	</tr>
+	<tr>
+		<td>65&ndash;74</td>
+		<td class="alignRight">74.9%</td>
+	</tr>
+	<tr>
+		<td>75+</td>
+		<td class="alignRight">65.9%</td>
+	</tr>
+</table>
+</details>
+
+<p>Participation of voters aged 18–24 had declined, but is still above the historical average (minus 10.4 points to 46.7%), after seeing the maximum participation on record (57.1%) in 2015. Among the 18–24 age group, those electors eligible to vote for the first time federally, i.e., those born between September&nbsp;20,&nbsp;2003, and October&nbsp;22,&nbsp;2001, voted at a comparable rate (44.7%) as those who were previously eligible to vote (47.4%).</p>
+
+<p>Figure 5 shows how turnout by age group in 2021 compares with the range of turnout rates for all elections since 2004.</p>
+
+<ul>
+	<li>The grey line indicates the average turnout for elections from 2004 to 2021, inclusive</li>
+
+	<li>The upward pointing triangle indicates the highest turnout rate for a given age group in the same timeframe</li>
+
+	<li>The downward pointing triangle indicates the lowest turnout rate for a given age group
+<figure>
+<figcaption class="bold">Figure 5: Voter Turnout by Age Group, General Elections 2004 to 2021*</figcaption>
+<p class="alignCenter"><img src="res/rec/eval/pes2021/evt/images/fig5_e.png" alt="Figure 5: Voter Turnout by Age Group, General Elections 2004 to 2021*"></p>
+<details class="newlongdesc">
+<summary><span class="newlongdescIE">Text version of "Figure 5: Voter Turnout by Age Group, General Elections 2004 to 2021*"</span></summary>
+<table class="width90">
+<caption class="hidden">Figure 5: Voter Turnout by Age Group, General Elections 2004 to 2021*</caption>
+	<thead><tr>
+		<th scope="col">Gender</th>
+		<th scope="col">Age Group</th>
+		<th scope="col">Eligible population</th></tr></thead><tr><td>Women+</td>
+		<td>1st time</td>
+		<td class="alignRight">340,642</td>
+	</tr>
+	<tr>
+		<td>Women+</td>
+		<td>not 1st time</td>
+		<td class="alignRight">960,325</td>
+	</tr>
+	<tr>
+		<td>Women+</td>
+		<td>18&ndash;24</td>
+		<td class="alignRight">1,300,966</td>
+	</tr>
+	<tr>
+		<td>Women+</td>
+		<td>25&ndash;34</td>
+		<td class="alignRight">2,142,212</td>
+	</tr>
+	<tr>
+		<td>Women+</td>
+		<td>35&ndash;44</td>
+		<td class="alignRight">2,259,468</td>
+	</tr>
+	<tr>
+		<td>Women+</td>
+		<td>45&ndash;54</td>
+		<td class="alignRight">2,223,582</td>
+	</tr>
+	<tr>
+		<td>Women+</td>
+		<td>55&ndash;64</td>
+		<td class="alignRight">2,548,984</td>
+	</tr>
+	<tr>
+		<td>Women+</td>
+		<td>65&ndash;74</td>
+		<td class="alignRight">2,003,523</td>
+	</tr>
+	<tr>
+		<td>Women+</td>
+		<td>75+</td>
+		<td class="alignRight">1,612,587</td>
+	</tr>
+	<tr>
+		<td>Men+</td>
+		<td>1st time</td>
+		<td class="alignRight">358,009</td>
+	</tr>
+	<tr>
+		<td>Men+</td>
+		<td>not 1st time</td>
+		<td class="alignRight">1,008,859</td>
+	</tr>
+	<tr>
+		<td>Men+</td>
+		<td>18&ndash;24</td>
+		<td class="alignRight">1,366,869</td>
+	</tr>
+	<tr>
+		<td>Men+</td>
+		<td>25&ndash;34</td>
+		<td class="alignRight">2,193,646</td>
+	</tr>
+	<tr>
+		<td>Men+</td>
+		<td>35&ndash;44</td>
+		<td class="alignRight">2,178,342</td>
+	</tr>
+	<tr>
+		<td>Men+</td>
+		<td>45&ndash;54</td>
+		<td class="alignRight">2,143,227</td>
+	</tr>
+	<tr>
+		<td>Men+</td>
+		<td>55&ndash;64</td>
+		<td class="alignRight">2,463,723</td>
+	</tr>
+	<tr>
+		<td>Men+</td>
+		<td>65&ndash;74</td>
+		<td class="alignRight">1,888,687</td>
+	</tr>
+	<tr>
+		<td>Men+</td>
+		<td>75+</td>
+		<td class="alignRight">1,321,350</td>
+	</tr>
+</table>
+</details>
+</figure></li>
+
+    <li>The circle and the numeric label indicate the results for the 44th general election; when the circle overlaps with a triangle, the result reached a high or low point in the 2004–2021 period</li>
+</ul>
+
+<p>From this chart, we observe that the turnout for the 44th general election is around the historical average in this period for all age groups.</p>
+
+<section class="newfoot">
+<h2>Footnote</h2>
+<p id="ftn4"><a class="fn-lnk" href="#ftnref4"><span class="hidden">Return to footnote</span> <sup>4</sup></a>Source: National Register of Electors - Updates: November 2020 Annual Lists of Electors. Elections Canada. <a href="https://www.elections.ca/content.aspx?section=pol&amp;document=index&amp;dir=ann/upd&amp;lang=e">https://www.elections.ca/content.aspx?section=pol&amp;document=index&amp;dir=ann/upd&amp;lang=e</a></p>
+</section>
+
+<ul id="navent2">
+  <li><a href="content.aspx?section=res&dir=rec/eval/pes2021/evt&document=p4&lang=e">Previous</a></li>
+  <li><a href="content.aspx?section=res&dir=rec/eval/pes2021/evt&document=index&lang=e">Table of Contents</a></li>
+  <li><a href="content.aspx?section=res&dir=rec/eval/pes2021/evt&document=p6&lang=e">Next</a></li>
+</ul>
+
+</div></main>
+
+	<!--</form>-->
+  
+	<br class="clearall noclearprint">
+	<br>
+
+<!--END - DIV.WRAP -->   
+</div>
+	
+<footer>
+<!--BEGIN - DIV.FOOTER -->
+<div id="footer">
+
+
+
+	<!--BEGIN - Top Footer -->
+	<div id="footerwrap1">
+		<div class="socialwrap">
+			<div class="container">
+				<h2><span class="allcaps"><strong>Follow us</strong></span> on social media</h2>
+				<p class="alignCenter"><a class="footerSocImages" href="/content.aspx?section=cont&amp;dir=soc&amp;document=index&amp;lang=e"><img src="/templates/images/followus.png" alt="Follow us on social media" /></a></p>
+			</div>       
+		</div>
+		<div class="socialwrap2">
+			<div class="container">
+				<h2><span class="allcaps"><strong>Share this page</strong></span> on social media</h2>
+				<script src="/sb.js"></script>
+				<noscript>
+					<p style="font-size:0.85em; margin-top:0px;"><a href="https://www.facebook.com">Go to Facebook</a>. <a href="https://www.twitter.com">Go to Twitter</a>. <a href="https://www.linkedin.com/">Go to Linkedin</a>. <a href="https://reddit.com">Go to Reddit</a>. <a href="https://www.bluesky.com/">Go to Bluesky</a>. <a href="mailto:?subject=Elections%20Canada%20en%20ligne">Send this page to a friend</a>.</p>
+				</noscript>            
+			</div>
+		</div>
+		<div class="socialwrap3">
+			<div class="contact">Questions? <a href="/content.aspx?section=cont&amp;document=index&amp;lang=e">Contact us</a>.</div> 
+		</div>
+	</div>   
+	<!--END - Top Footer -->
+
+	<!--BEGIN - Links Middle Footer -->
+	<div id="footerwrap2">
+		<div class="footercol">     
+			<nav class="span-2" aria-labelledby="aboutUs">
+				<h4 id="aboutUs" class="FontcolorWhite">About us</h4>
+				<ul>
+					<li><a href="/content.aspx?section=abo&amp;dir=mis&amp;document=index&amp;lang=e">Our mandate</a></li>
+					<li><a href="/content.aspx?section=abo&amp;dir=ceo&amp;document=index&amp;lang=e">The Chief Electoral Officer</a></li>
+					<li><a href="/content.aspx?section=abo&amp;dir=pri&amp;document=index&amp;lang=e">Privacy at Elections Canada</a></li>
+					<li><a href="/content.aspx?section=vot&amp;dir=spe&amp;document=index&amp;lang=e">Our Accessibility Plan</a></li>
+				</ul>
+			</nav>    
+			<nav class="span-2" aria-labelledby="newsroom">
+				<h4 id="newsroom" class="FontcolorWhite">Newsroom</h4>
+				<ul>
+					<li><a href="/content.aspx?section=med&amp;dir=pre&amp;document=index&amp;lang=e">News Releases</a></li>
+					<li><a href="/content.aspx?section=med&amp;dir=spe&amp;document=index&amp;lang=e">Statements and Speeches</a></li>
+				</ul>
+			</nav> 
+			<nav class="span-2" aria-labelledby="usefullLinks">
+				<h4 id="usefullLinks" class="FontcolorWhite">Useful Links</h4>
+				<ul>
+					<li><a href="/sub.aspx?lang=e">Subscription Service</a></li> 
+					<li><a href="/content.aspx?section=new&amp;document=index&amp;lang=e">What's New</a></li>
+					<li><a href="/content.aspx?section=lin&amp;document=index&amp;lang=e">Links</a></li>
+				</ul>
+			</nav> 
+			<nav class="span-2" aria-labelledby="contactUs">
+				<h4 id="contactUs" class="FontcolorWhite">Contact us</h4>
+				<ul>
+					<li><a href="/content.aspx?section=cont&amp;document=index&amp;lang=e">Questions, Complaints, Feedback</a></li>
+					<li><a href="/content.aspx?section=abo&dir=pro/sup&document=index&lang=e">Become a supplier to Elections Canada</a></li>
+				</ul>
+			</nav> 
+		</div>
+	</div> 
+	<!--END - Links Middle Footer -->
+  
+	<!--BEGIN - Page Bottom -->
+	<div id="footerwrap3">
+		<div class="column1">Date Modified: October 31, 2023</div>
+		<div class="column2"><a href="/content.aspx?section=pri&amp;document=index&amp;lang=e">Terms and Conditions</a></div>
+	</div>
+	<!--END - Page Bottom --> 
+
+	
+
+	<script>
+		$(document).ready(function() { 
+
+		$('#topnav').addClass('jsenabled');
+		$('#leftnav').addClass('jsenabled');
+
+		var $menu = $('#topnav'),
+		$menu2 = $('#leftnav'),
+					$menulink = $('.topnav-link'),
+					$menulink2 = $('.leftnav-link');
+
+		$menulink.click(function() {
+		  $menulink.toggleClass('topnavexpanded');
+		  $menu.toggleClass('topnavexpanded');
+		  return false;
+		});
+
+		$menulink2.click(function() {
+		  $menulink2.toggleClass('topnavexpanded');
+		  $menu2.toggleClass('topnavexpanded');
+		  return false;
+		});});
+	</script>
+	<script type="text/javascript">_satellite.pageBottom();</script>
+
+<!--END - DIV.FOOTER -->	
+</div>
+</footer>	
+</body>
+</html>
