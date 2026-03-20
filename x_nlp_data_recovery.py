@@ -23,11 +23,6 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 RAW_TWEETS_CSV = ROOT / 'notebooks' / 'data' / 'twitter_canada_pre_election_raw.csv'
 OUT_CSV = OUT_DIR / 'x_nlp_party_summary_2021_2025.csv'
 
-ARTICLE_URL = 'https://mozaikanalytics.com/blog/how-to/2025-canada-election-retrospective'
-CHART5_URL = 'https://mozaikanalytics.com/wp-content/uploads/2025/06/Chart-5.png'
-CHART6_URL = 'https://mozaikanalytics.com/wp-content/uploads/2025/06/Chart-6.png'
-CHART7_URL = 'https://mozaikanalytics.com/wp-content/uploads/2025/06/Chart-7.png'
-
 PARTY_TERMS = {
     'Liberal': ['liberal', 'liberal party', 'liberal party of canada', 'trudeau', 'team trudeau', 'parti liberal'],
     'Conservative': ['conservative', 'conservative party', 'conservative party of canada', 'cpc', 'poilievre', 'parti conservateur'],
@@ -40,38 +35,40 @@ PARTY_PATTERNS = {
     for party, terms in PARTY_TERMS.items()
 }
 
-POS_WORDS = {
-    'good', 'great', 'support', 'strong', 'win', 'hope', 'trust', 'better',
-    'excellent', 'improve', 'positive', 'leader', 'stable', 'progress',
-}
-NEG_WORDS = {
-    'bad', 'worse', 'corrupt', 'hate', 'weak', 'fail', 'lying', 'scandal',
-    'negative', 'angry', 'broken', 'disaster', 'problem', 'inflation',
-}
+import torch
+from transformers import pipeline as _hf_pipeline
+
+MODEL_NAME = 'cardiffnlp/twitter-roberta-base-sentiment-latest'
 
 
-def clean_text(text):
+def preprocess_for_roberta(text):
+    """Anonymise @mentions and URLs as the model expects."""
     text = str(text)
-    text = re.sub(r'http\S+', ' ', text)
-    text = re.sub(r'@\w+', ' ', text)
+    text = re.sub(r'http\S+', 'http', text)
+    text = re.sub(r'@\w+', '@user', text)
     return re.sub(r'\s+', ' ', text).strip()
 
 
-def score_text(text):
-    tokens = re.findall(r"[a-z']+", str(text).lower())
-    if not tokens:
-        return 0.0
-    pos = sum(t in POS_WORDS for t in tokens)
-    neg = sum(t in NEG_WORDS for t in tokens)
-    return float((pos - neg) / max(len(tokens), 1))
+print(f'Loading {MODEL_NAME} ...')
+_device = 0 if torch.cuda.is_available() else -1
+_pipe = _hf_pipeline(
+    'text-classification',
+    model=MODEL_NAME,
+    tokenizer=MODEL_NAME,
+    device=_device,
+    truncation=True,
+    max_length=128,
+    top_k=None,
+)
 
 
-def sentiment_label(score):
-    if score >= 0.05:
-        return 'positive'
-    if score <= -0.05:
-        return 'negative'
-    return 'neutral'
+def score_batch(texts, batch_size=32):
+    """Return list of {positive, neutral, negative} probability dicts."""
+    results = []
+    for i in range(0, len(texts), batch_size):
+        for out in _pipe(texts[i:i + batch_size]):
+            results.append({d['label'].lower(): d['score'] for d in out})
+    return results
 
 
 def project_linear(df, value_col, target_year):
@@ -88,63 +85,49 @@ def project_linear(df, value_col, target_year):
 
 
 raw = pd.read_csv(RAW_TWEETS_CSV)
-raw['clean_text'] = raw['content'].map(clean_text)
-raw['party_list'] = raw['clean_text'].map(
+raw['roberta_text'] = raw['content'].map(preprocess_for_roberta)
+raw['party_list'] = raw['content'].map(
     lambda text: [party for party, pattern in PARTY_PATTERNS.items() if pattern.search(text)]
 )
 expanded = raw.explode('party_list').dropna(subset=['party_list']).rename(columns={'party_list': 'Party'})
-expanded['sentiment_score'] = expanded['clean_text'].map(score_text)
-expanded['sentiment_label'] = expanded['sentiment_score'].map(sentiment_label)
 
-volume_2021 = expanded.groupby('Party', as_index=False).agg(TweetVolume=('tweet_id', 'nunique'))
-counts_2021 = expanded.pivot_table(index='Party', columns='sentiment_label', values='tweet_id', aggfunc='count', fill_value=0).reset_index()
-summary_2021 = volume_2021.merge(counts_2021, on='Party', how='left')
-for col in ['positive', 'negative', 'neutral']:
-    if col not in summary_2021.columns:
-        summary_2021[col] = 0
-summary_2021['PositivePct'] = summary_2021['positive'] / summary_2021['TweetVolume'].clip(lower=1)
-summary_2021['NegativePct'] = summary_2021['negative'] / summary_2021['TweetVolume'].clip(lower=1)
-summary_2021['SupportIndex'] = summary_2021['PositivePct'] - summary_2021['NegativePct']
-summary_2021['XShare'] = summary_2021['TweetVolume'] / summary_2021['TweetVolume'].sum()
-summary_2021['Year'] = 2021
-summary_2021['SourceType'] = 'local_x_raw_2021'
-summary_2021['SourceURL'] = str(RAW_TWEETS_CSV)
-summary_2021['Notes'] = 'Computed from local pre-election X raw tweets with simple lexicon sentiment.'
-summary_2021['EstimatedXMentions'] = summary_2021['TweetVolume']
-summary_2021['TotalMentions'] = np.nan
-summary_2021['XChannelShareWithinParty'] = 1.0
+# Score all unique texts across both years in one pass
+unique_texts = expanded['roberta_text'].unique().tolist()
+print(f'Running Twitter-RoBERTa on {len(unique_texts):,} unique texts ...')
+scores = score_batch(unique_texts)
+text_scores = dict(zip(unique_texts, scores))
 
-summary_2025 = pd.DataFrame([
-    {'Party': 'Liberal', 'TotalMentions': 82690, 'MentionShare': 0.29, 'PositivePct': 0.50, 'NegativePct': 0.41, 'XChannelShareWithinParty': 0.37},
-    {'Party': 'Conservative', 'TotalMentions': 69254, 'MentionShare': 0.24, 'PositivePct': 0.47, 'NegativePct': 0.43, 'XChannelShareWithinParty': 0.31},
-    {'Party': 'NDP', 'TotalMentions': 33317, 'MentionShare': 0.12, 'PositivePct': 0.57, 'NegativePct': 0.30, 'XChannelShareWithinParty': 0.26},
-    {'Party': 'Bloc Québécois', 'TotalMentions': 21793, 'MentionShare': 0.08, 'PositivePct': 0.65, 'NegativePct': 0.21, 'XChannelShareWithinParty': 0.21},
-    {'Party': 'Green', 'TotalMentions': 13642, 'MentionShare': 0.05, 'PositivePct': 0.58, 'NegativePct': 0.26, 'XChannelShareWithinParty': 0.26},
-])
-summary_2025['EstimatedXMentions'] = summary_2025['TotalMentions'] * summary_2025['XChannelShareWithinParty']
-summary_2025['TweetVolume'] = summary_2025['EstimatedXMentions']
-summary_2025['SupportIndex'] = summary_2025['PositivePct'] - summary_2025['NegativePct']
-summary_2025['XShare'] = summary_2025['EstimatedXMentions'] / summary_2025['EstimatedXMentions'].sum()
-summary_2025['Year'] = 2025
-summary_2025['SourceType'] = 'public_2025_x_proxy'
-summary_2025['SourceURL'] = ARTICLE_URL
-summary_2025['Notes'] = (
-    '2025 values transcribed from Mozaik Charts 5/6/7. '
-    'Total mentions from Chart-5, sentiment from Chart-6, X channel share from Chart-7.'
+expanded['pos_score'] = expanded['roberta_text'].map(lambda t: text_scores[t].get('positive', 0.0))
+expanded['neg_score'] = expanded['roberta_text'].map(lambda t: text_scores[t].get('negative', 0.0))
+expanded['sentiment_label'] = expanded['roberta_text'].map(
+    lambda t: max(text_scores[t], key=text_scores[t].get)
 )
 
-summary = pd.concat([
-    summary_2021[[
-        'Year', 'Party', 'TweetVolume', 'TotalMentions', 'EstimatedXMentions',
-        'PositivePct', 'NegativePct', 'SupportIndex', 'XShare', 'XChannelShareWithinParty',
-        'SourceType', 'SourceURL', 'Notes',
-    ]],
-    summary_2025[[
-        'Year', 'Party', 'TweetVolume', 'TotalMentions', 'EstimatedXMentions',
-        'PositivePct', 'NegativePct', 'SupportIndex', 'XShare', 'XChannelShareWithinParty',
-        'SourceType', 'SourceURL', 'Notes',
-    ]],
-], ignore_index=True)
+# Aggregate per year × party — works for any election years present in the CSV
+year_summaries = []
+for yr, grp in expanded.groupby('election_year'):
+    yr = int(yr)
+    vol  = grp.groupby('Party', as_index=False).agg(TweetVolume=('tweet_id', 'nunique'))
+    prob = grp.groupby('Party', as_index=False).agg(
+        PositivePct=('pos_score', 'mean'),
+        NegativePct=('neg_score', 'mean'),
+    )
+    s = vol.merge(prob, on='Party', how='left')
+    s['SupportIndex']           = s['PositivePct'] - s['NegativePct']
+    s['XShare']                 = s['TweetVolume'] / s['TweetVolume'].sum()
+    s['Year']                   = yr
+    s['TotalMentions']          = np.nan
+    s['EstimatedXMentions']     = s['TweetVolume']
+    s['XChannelShareWithinParty'] = 1.0
+    s['SourceType']             = f'x_api_{yr}'
+    s['SourceURL']              = str(RAW_TWEETS_CSV)
+    s['Notes']                  = (
+        f'Computed from X API tweets ({yr} pre-election window) '
+        f'using {MODEL_NAME} sentiment model.'
+    )
+    year_summaries.append(s)
+
+summary = pd.concat(year_summaries, ignore_index=True)
 
 proj_support = project_linear(summary[summary['Year'].isin([2021, 2025])], 'SupportIndex', 2029)
 proj_xshare = project_linear(summary[summary['Year'].isin([2021, 2025])], 'XShare', 2029)
@@ -159,18 +142,12 @@ summary_2029['PositivePct'] = np.nan
 summary_2029['NegativePct'] = np.nan
 summary_2029['XChannelShareWithinParty'] = np.nan
 summary_2029['SourceType'] = 'linear_projection_2029'
-summary_2029['SourceURL'] = ARTICLE_URL
+summary_2029['SourceURL'] = str(RAW_TWEETS_CSV)
 summary_2029['Notes'] = 'SupportIndex and XShare linearly projected from 2021 and 2025 values.'
 summary = pd.concat([summary, summary_2029[summary.columns]], ignore_index=True)
 
 summary.to_csv(OUT_CSV, index=False)
 
-print('Source URLs:')
-print(f'- 2025 retrospective article: {ARTICLE_URL}')
-print(f'- Chart 5 (total mentions): {CHART5_URL}')
-print(f'- Chart 6 (sentiment): {CHART6_URL}')
-print(f'- Chart 7 (X channel share): {CHART7_URL}')
-print('')
 print(f'Saved: {OUT_CSV}')
 print('')
 print(summary.sort_values(['Year', 'Party']).round(4).to_string(index=False))
