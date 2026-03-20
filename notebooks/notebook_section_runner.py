@@ -30,6 +30,10 @@ SCRIPT_PREREQUISITES = {
     "voter_generation_preference_model.py": (
         ("outputs/national_vote_share_clean.csv", "election_workflow.py"),
     ),
+    "x_nlp_vote_prediction.py": (
+        ("outputs/national_vote_share_clean.csv", "election_workflow.py"),
+        ("outputs_demographics/x_nlp_party_summary_2021_2025.csv", "x_nlp_data_recovery.py"),
+    ),
 }
 
 
