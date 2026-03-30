@@ -242,7 +242,7 @@ def main():
 
     plt.figure()
     plt.bar(df["Province"], df["Median_age"])
-    plt.ylabel("Years")
+    plt.ylabel("Age")
     plt.title(f"Median age - AB, BC, ON, QC ({year})")
     plt.xticks(rotation=20, ha="right")
     plt.tight_layout()

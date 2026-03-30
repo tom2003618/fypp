@@ -132,7 +132,7 @@ summary = pd.concat(year_summaries, ignore_index=True)
 proj_support = project_linear(summary[summary['Year'].isin([2021, 2025])], 'SupportIndex', 2029)
 proj_xshare = project_linear(summary[summary['Year'].isin([2021, 2025])], 'XShare', 2029)
 summary_2029 = proj_support.merge(proj_xshare, on=['Party', 'Year'], how='inner')
-summary_2029['XShare'] = summary_2029['XShare'].clip(lower=0.0)
+summary_2029['XShare'] = summary_2029['XShare'].clip(lower=0.005)
 summary_2029['XShare'] = summary_2029['XShare'] / summary_2029['XShare'].sum()
 summary_2029['SupportIndex'] = summary_2029['SupportIndex'].clip(-1.0, 1.0)
 summary_2029['TweetVolume'] = np.nan

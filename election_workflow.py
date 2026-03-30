@@ -142,6 +142,13 @@ def build_prov_votes_electors_from_kaggle(kdir):
     m = m.dropna(subset=["province", "year"]).copy()
     m["year"] = m["year"].astype(int)
 
+    # Normalize historical province names
+    prov_name_map = {
+        "Newfoundland": "Newfoundland and Labrador",
+        "Yukon Territory": "Yukon",
+    }
+    m["province"] = m["province"].replace(prov_name_map)
+
     out = m.groupby(["year", "province"], as_index=False)[["votes", "electors"]].sum()
     out = out.sort_values(["province", "year"])
     return out
