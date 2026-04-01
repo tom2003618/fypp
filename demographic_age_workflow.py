@@ -93,7 +93,7 @@ def filter_gender_stats(df: pd.DataFrame) -> pd.DataFrame:
             df = df[m].copy()
     if c_stat:
         st = clean_text(df[c_stat])
-        m = (st.str.contains("number", case=False, na=False) | st.str.contains("population", case=False, na=False)) & (~st.str.contains("percent", case=False, na=False))
+        m = (st.str.contains("number", case=False, na=False) | st.str.contains("population", case=False, na=False) | st.str.contains("counts", case=False, na=False)) & (~st.str.contains("percent", case=False, na=False))
         if m.any():
             df = df[m].copy()
     return df
