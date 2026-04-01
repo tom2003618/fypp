@@ -121,7 +121,8 @@ def build_pct_by_age(df: pd.DataFrame, age_col: str, value: pd.Series, group_nam
     else:
         g["pct"] = 0.0
     g["group"] = group_name
-    return g[["group", "age_group", "pct"]]
+    g["population"] = g["value"]
+    return g[["group", "age_group", "pct", "population"]]
 
 def pick_wide_col(df: pd.DataFrame, must_contain: str, target_regexes) -> str | None:
     cols = [c for c in df.columns if must_contain.lower() in str(c).lower()]
@@ -244,6 +245,34 @@ def plot_heatmap(df: pd.DataFrame, out_png: Path) -> None:
     fig.savefig(out_png, dpi=200)
     plt.close(fig)
 
+def plot_population(df: pd.DataFrame, out_png: Path) -> None:
+    pivot = df.pivot_table(index="age_group", columns="group", values="population", aggfunc="sum").fillna(0.0)
+    ages = [a for a in KEEP_AGE if a in pivot.index]
+    if not ages:
+        ages = sorted(pivot.index.tolist(), key=age_order_key)
+    pivot = pivot.loc[ages]
+    groups = ["East Asian (China+Hong Kong)", "India", "Black", "White"]
+    for g in groups:
+        if g not in pivot.columns:
+            pivot[g] = 0.0
+    pivot = pivot[groups]
+    x = np.arange(len(pivot.index))
+    w = 0.2
+    fig, ax = plt.subplots(figsize=(14, 7))
+    for i, grp in enumerate(groups):
+        ax.bar(x + i * w, pivot[grp].values, width=w, label=grp)
+    ax.set_xticks(x + w * 1.5)
+    ax.set_xticklabels(pivot.index.tolist(), rotation=45, ha="right")
+    ax.set_xlabel("Age group")
+    ax.set_ylabel("Population")
+    ax.set_title(f"Population by age group and ethnicity - {TARGET_GEO} (2021 Census)")
+    ax.legend()
+    ax.grid(axis="y", alpha=0.3)
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v/1e6:.1f}M" if v >= 1e6 else f"{v/1e3:.0f}K"))
+    fig.tight_layout()
+    fig.savefig(out_png, dpi=200)
+    plt.close(fig)
+
 def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     vm = read_statcan_fulltable(VM_ZIP)
@@ -254,9 +283,11 @@ def main():
     all_df.to_csv(OUT_DIR / "age_by_group_CANADA.csv", index=False)
     plot_lines(all_df, OUT_DIR / "fig_age_by_group_CANADA.png")
     plot_heatmap(all_df, OUT_DIR / "fig_age_by_group_heatmap_CANADA.png")
+    plot_population(all_df, OUT_DIR / "fig_age_by_group_population_CANADA.png")
     print("Saved:", OUT_DIR / "age_by_group_CANADA.csv")
     print("Saved:", OUT_DIR / "fig_age_by_group_CANADA.png")
     print("Saved:", OUT_DIR / "fig_age_by_group_heatmap_CANADA.png")
+    print("Saved:", OUT_DIR / "fig_age_by_group_population_CANADA.png")
 
 if __name__ == "__main__":
     main()
