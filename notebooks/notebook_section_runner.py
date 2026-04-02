@@ -34,6 +34,13 @@ SCRIPT_PREREQUISITES = {
         ("outputs/national_vote_share_clean.csv", "election_workflow.py"),
         ("outputs_demographics/x_nlp_party_summary_2021_2025.csv", "x_nlp_data_recovery.py"),
     ),
+    "multi_factor_ensemble.py": (
+        ("outputs/national_vote_share_clean.csv", "election_workflow.py"),
+        ("outputs_demographics/factor_based_2025_predictions.csv", "factor_based_2025_prediction_and_projection.py"),
+        ("outputs_demographics/education_attainment_predictions_2025.csv", "education_attainment_2025_prediction.py"),
+        ("outputs_demographics/voter_generation_party_preference_model_2011_2025.csv", "voter_generation_preference_model.py"),
+        ("outputs/prediction_2025_vs_actual.csv", "prediction_2025_vs_actual.py"),
+    ),
 }
 
 

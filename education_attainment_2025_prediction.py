@@ -22,6 +22,7 @@ PROVINCES = ['Alberta', 'British Columbia', 'Ontario', 'Quebec']
 PARTIES = ['Liberal', 'Conservative', 'NDP', 'Bloc Québécois', 'Green', 'Others']
 TRAIN_YEAR = 2021
 TARGET_YEAR = 2025
+NEXT_YEAR = 2029
 
 ELECTION_SOURCE_URLS = {
     2021: 'https://www.elections.ca/content.aspx?section=res&dir=rep/off/44gedata&document=byprovtbl&lang=e',
@@ -268,7 +269,7 @@ def predict_from_factor(name, factor_df, votes, pop_all, national_actual, canada
     )
 
     national_predictions = []
-    for year in [TRAIN_YEAR, TARGET_YEAR]:
+    for year in [TRAIN_YEAR, TARGET_YEAR, NEXT_YEAR]:
         year_factor = factor_df[factor_df['Year'] == year][['Province', 'FactorValue']].copy()
         if len(year_factor) != len(PROVINCES):
             continue
@@ -354,6 +355,25 @@ if TARGET_YEAR not in set(population_all['Year']):
     population_all = pd.concat([population_all, pop_proj, can_proj], ignore_index=True)
     canada_population = population_all[population_all['Province'] == 'Canada'].copy()
 
+# Also project population to 2029 if missing
+if NEXT_YEAR not in set(population_all['Year']):
+    pop_proj_2029 = project_linear(
+        population_all[population_all['Province'].isin(PROVINCES) & population_all['Year'].between(2021, 2025)],
+        ['Province'],
+        'Year',
+        'Population',
+        NEXT_YEAR,
+    )
+    can_proj_2029 = project_linear(
+        canada_population[canada_population['Year'].between(2021, 2025)],
+        ['Province'],
+        'Year',
+        'Population',
+        NEXT_YEAR,
+    )
+    population_all = pd.concat([population_all, pop_proj_2029, can_proj_2029], ignore_index=True)
+    canada_population = population_all[population_all['Province'] == 'Canada'].copy()
+
 results = []
 for display_label, raw_level in EDUCATION_LEVELS:
     factor_df = load_education_level_series(CACHE_DIR, raw_level)
@@ -366,6 +386,15 @@ for display_label, raw_level in EDUCATION_LEVELS:
             TARGET_YEAR,
         )
         factor_df = pd.concat([factor_df, factor_2025], ignore_index=True)
+    if NEXT_YEAR not in set(factor_df['Year']):
+        factor_2029 = project_linear(
+            factor_df[factor_df['Year'].between(2021, 2025)],
+            ['Province'],
+            'Year',
+            'FactorValue',
+            NEXT_YEAR,
+        )
+        factor_df = pd.concat([factor_df, factor_2029], ignore_index=True)
     result = predict_from_factor(
         f'Education: {display_label}',
         factor_df,
@@ -396,6 +425,12 @@ pred_2025 = all_preds[all_preds['Year'] == TARGET_YEAR].merge(
     how='left',
 ).rename(columns={'VoteShare': 'ActualVoteShare'})
 pred_2025.to_csv(OUT_DIR / 'education_attainment_predictions_2025.csv', index=False)
+
+# Save 2029 projections
+pred_2029 = all_preds[all_preds['Year'] == NEXT_YEAR].copy()
+if not pred_2029.empty:
+    pred_2029.to_csv(OUT_DIR / 'education_attainment_predictions_2029.csv', index=False)
+    print(f"Saved: {OUT_DIR / 'education_attainment_predictions_2029.csv'}")
 
 best_factor = summary.iloc[0]['Factor']
 best_pred = pred_2025[pred_2025['Factor'] == best_factor].copy().set_index('Party').reindex(PARTIES).reset_index()

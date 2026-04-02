@@ -30,6 +30,7 @@ TURNOUT_2021_URL = 'https://www.elections.ca/content.aspx?dir=rec/eval/pes2021/e
 STATCAN_POP_URL = 'https://www150.statcan.gc.ca/n1/tbl/csv/17100005-eng.zip'
 HIST_YEARS = [2011, 2015, 2019, 2021]
 TARGET_YEAR = 2025
+NEXT_YEAR = 2029
 AGE_BANDS = ['18-34', '35-54', '55+']
 PARTIES = ['Liberal', 'Conservative', 'NDP', 'Bloc Québécois', 'Green', 'Others']
 SEVEN_AGE_GROUPS = ['18-24', '25-34', '35-44', '45-54', '55-64', '65-74', '75+']
@@ -159,7 +160,7 @@ def load_population_age_groups(cache_path):
     pop = pop[(pop['GEO'] == 'Canada') & (pop['Gender'].astype(str).str.contains('Both|Total', case=False, na=False))].copy()
     pop['Year'] = pd.to_numeric(pop['REF_DATE'].astype(str).str.extract(r'(\d{4})', expand=False), errors='coerce')
     pop['VALUE_NUM'] = pd.to_numeric(pop['VALUE'].astype(str).str.replace(',', '', regex=False), errors='coerce')
-    pop = pop[pop['Year'].isin(HIST_YEARS + [TARGET_YEAR])]
+    pop = pop[pop['Year'].isin(HIST_YEARS + [TARGET_YEAR, NEXT_YEAR])]
     rows = []
     for age_group, labels in POP_LABELS.items():
         tmp = pop[pop['Age group'].isin(labels)].groupby('Year', as_index=False)['VALUE_NUM'].sum()
@@ -171,11 +172,12 @@ def load_population_age_groups(cache_path):
 
 def broad_age_weights(pop_age, turnout):
     hist = turnout.copy()
-    for age_group in SEVEN_AGE_GROUPS:
-        g = hist[hist['AgeGroup'] == age_group].sort_values('Year')
-        slope, intercept = np.polyfit(g['Year'], g['TurnoutPct'], 1)
-        pred = float(np.clip(slope * TARGET_YEAR + intercept, 0.0, 100.0))
-        hist = pd.concat([hist, pd.DataFrame({'Year': [TARGET_YEAR], 'AgeGroup': [age_group], 'TurnoutPct': [pred]})], ignore_index=True)
+    for proj_year in [TARGET_YEAR, NEXT_YEAR]:
+        for age_group in SEVEN_AGE_GROUPS:
+            g = hist[hist['AgeGroup'] == age_group].sort_values('Year')
+            slope, intercept = np.polyfit(g['Year'], g['TurnoutPct'], 1)
+            pred = float(np.clip(slope * proj_year + intercept, 0.0, 100.0))
+            hist = pd.concat([hist, pd.DataFrame({'Year': [proj_year], 'AgeGroup': [age_group], 'TurnoutPct': [pred]})], ignore_index=True)
     merged = pop_age.merge(hist, on=['Year', 'AgeGroup'], how='inner')
     merged['EstimatedVoters'] = merged['Population'] * merged['TurnoutPct'] / 100.0
     merged['AgeBand'] = merged['AgeGroup'].map(SEVEN_TO_BROAD)
@@ -272,6 +274,19 @@ def project_national_2025(national):
     return out
 
 
+def project_national_year(national, year):
+    rows = []
+    for party in PARTIES:
+        s = national[national['Party'] == party].sort_values('Year')
+        years = s['Year'].to_numpy(dtype=float)
+        vals = np.clip(s['VoteShare'].to_numpy(dtype=float) / 100.0, 1e-6, 1.0)
+        slope, intercept = np.polyfit(years, np.log(vals), 1)
+        rows.append((party, float(np.exp(slope * year + intercept))))
+    out = pd.DataFrame(rows, columns=['Party', 'PredShare'])
+    out['PredShare'] = out['PredShare'] / out['PredShare'].sum() * 100.0
+    return out
+
+
 def draw_heatmap(ax, matrix, title, vmax):
     im = ax.imshow(matrix.values, cmap='YlOrRd', aspect='auto', vmin=0, vmax=vmax)
     ax.set_title(title)
@@ -304,6 +319,20 @@ download_if_missing(STATCAN_POP_URL, CACHE_DIR / '17100005-eng.zip')
 pref_obs = load_poll_pref(PDF_CACHE)
 national = load_national_shares(ROOT / 'outputs' / 'national_vote_share_clean.csv')
 pop_age = load_population_age_groups(CACHE_DIR / '17100005-eng.zip')
+
+# Project population by age group to 2029 if missing
+if NEXT_YEAR not in set(pop_age['Year']):
+    proj_rows = []
+    for ag in pop_age['AgeGroup'].unique():
+        g = pop_age[pop_age['AgeGroup'] == ag].sort_values('Year')
+        recent = g[g['Year'].between(2019, 2025)]
+        if len(recent) >= 2:
+            slope, intercept = np.polyfit(recent['Year'], recent['Population'], 1)
+            proj_rows.append({'Year': NEXT_YEAR, 'AgeGroup': ag,
+                              'Population': max(0, float(slope * NEXT_YEAR + intercept))})
+    if proj_rows:
+        pop_age = pd.concat([pop_age, pd.DataFrame(proj_rows)], ignore_index=True)
+
 turnout = load_turnout_history(PDF_CACHE)
 weights, turnout_with_projection = broad_age_weights(pop_age, turnout)
 
@@ -316,11 +345,28 @@ model_2025 = fit_ipf_support(
     beta,
 ) * 100.0
 
+# 2029 projection
+nat_pred_2029 = project_national_year(national, NEXT_YEAR)
+weights_2029 = weights[weights['Year'] == NEXT_YEAR].set_index('AgeBand').reindex(AGE_BANDS)['Weight']
+if weights_2029.notna().all() and not weights_2029.empty:
+    model_2029 = fit_ipf_support(
+        nat_pred_2029.set_index('Party').reindex(PARTIES)['PredShare'].to_numpy() / 100.0,
+        weights_2029.to_numpy(),
+        beta,
+    ) * 100.0
+else:
+    model_2029 = None
+
 model_rows = []
-for year in HIST_YEARS + [TARGET_YEAR]:
+for year in HIST_YEARS + [TARGET_YEAR, NEXT_YEAR]:
     if year == TARGET_YEAR:
         mat = model_2025.copy()
         data_type = 'predicted_2025'
+    elif year == NEXT_YEAR:
+        if model_2029 is None:
+            continue
+        mat = model_2029.copy()
+        data_type = 'projected_2029'
     else:
         nat = national[national['Year'] == year].set_index('Party').reindex(PARTIES)['VoteShare'].to_numpy() / 100.0
         w = weights[weights['Year'] == year].set_index('AgeBand').reindex(AGE_BANDS)['Weight'].to_numpy()
