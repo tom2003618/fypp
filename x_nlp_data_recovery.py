@@ -99,6 +99,7 @@ text_scores = dict(zip(unique_texts, scores))
 
 expanded['pos_score'] = expanded['roberta_text'].map(lambda t: text_scores[t].get('positive', 0.0))
 expanded['neg_score'] = expanded['roberta_text'].map(lambda t: text_scores[t].get('negative', 0.0))
+expanded['neu_score'] = expanded['roberta_text'].map(lambda t: text_scores[t].get('neutral', 0.0))
 expanded['sentiment_label'] = expanded['roberta_text'].map(
     lambda t: max(text_scores[t], key=text_scores[t].get)
 )
@@ -110,6 +111,7 @@ for yr, grp in expanded.groupby('election_year'):
     vol  = grp.groupby('Party', as_index=False).agg(TweetVolume=('tweet_id', 'nunique'))
     prob = grp.groupby('Party', as_index=False).agg(
         PositivePct=('pos_score', 'mean'),
+        NeutralPct=('neu_score', 'mean'),
         NegativePct=('neg_score', 'mean'),
     )
     s = vol.merge(prob, on='Party', how='left')
@@ -139,6 +141,7 @@ summary_2029['TweetVolume'] = np.nan
 summary_2029['TotalMentions'] = np.nan
 summary_2029['EstimatedXMentions'] = np.nan
 summary_2029['PositivePct'] = np.nan
+summary_2029['NeutralPct'] = np.nan
 summary_2029['NegativePct'] = np.nan
 summary_2029['XChannelShareWithinParty'] = np.nan
 summary_2029['SourceType'] = 'linear_projection_2029'
@@ -151,3 +154,95 @@ summary.to_csv(OUT_CSV, index=False)
 print(f'Saved: {OUT_CSV}')
 print('')
 print(summary.sort_values(['Year', 'Party']).round(4).to_string(index=False))
+
+# ── Per-tweet sentiment CSV + PNG tables (2021 / 2025) ───────────────────
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import warnings
+warnings.filterwarnings('ignore', category=UserWarning, module='matplotlib')
+
+def _strip_emoji(text):
+    """Replace characters that DejaVu Sans cannot render with empty string."""
+    out = []
+    for c in str(text):
+        cp = ord(c)
+        # Keep Basic Latin, Latin Extended, and common punctuation
+        if cp < 0x2000 and c.isprintable():
+            out.append(c)
+        elif 0x2000 <= cp < 0x2100:  # General punctuation (dashes, quotes)
+            out.append(c)
+        # Skip emoji, CJK, regional indicators, etc.
+    return ''.join(out)
+
+tweet_detail = expanded[['election_year', 'Party', 'content',
+                         'pos_score', 'neu_score', 'neg_score',
+                         'sentiment_label']].copy()
+tweet_detail.columns = ['Year', 'Party', 'Content', 'Positive', 'Neutral',
+                        'Negative', 'Dominant']
+tweet_detail['Year'] = tweet_detail['Year'].astype(int)
+tweet_detail = tweet_detail.sort_values(['Year', 'Party']).reset_index(drop=True)
+
+# Round for display
+for c in ['Positive', 'Neutral', 'Negative']:
+    tweet_detail[c] = tweet_detail[c].round(4)
+
+tweet_csv_path = OUT_DIR / 'x_nlp_per_tweet_sentiment.csv'
+tweet_detail.to_csv(tweet_csv_path, index=False)
+print(f'\nSaved per-tweet CSV: {tweet_csv_path}  ({len(tweet_detail)} rows)')
+
+# Generate PNG tables — one per year, all pages
+for yr in sorted(tweet_detail['Year'].unique()):
+    sub = tweet_detail[tweet_detail['Year'] == yr].reset_index(drop=True)
+    # Truncate, strip emoji, escape $ for matplotlib
+    sub['Content'] = (sub['Content'].map(_strip_emoji).str[:80]
+                      .str.replace('\n', ' ', regex=False)
+                      .str.replace('$', '\\$', regex=False))
+    n_rows = len(sub)
+
+    page_size = 50
+    n_pages = (n_rows + page_size - 1) // page_size
+
+    for page in range(n_pages):
+        start = page * page_size
+        end = min(start + page_size, n_rows)
+        chunk = sub.iloc[start:end]
+
+        fig_h = max(4, 0.32 * len(chunk) + 2)
+        fig, ax = plt.subplots(figsize=(22, fig_h))
+        ax.axis('off')
+
+        col_labels = ['Year', 'Party', 'Content', 'Positive', 'Neutral', 'Negative', 'Dominant']
+        cell_data = []
+        cell_colors = []
+        for _, r in chunk.iterrows():
+            dom = r['Dominant']
+            row_data = [str(r['Year']), r['Party'], r['Content'],
+                        f"{r['Positive']:.2%}", f"{r['Neutral']:.2%}",
+                        f"{r['Negative']:.2%}", dom.capitalize()]
+            dom_color = ('#E8F5E9' if dom == 'positive'
+                         else '#FFEBEE' if dom == 'negative' else '#FFF8E1')
+            row_colors = ['white', 'white', 'white',
+                          '#E8F5E9', '#FFF8E1', '#FFEBEE', dom_color]
+            cell_data.append(row_data)
+            cell_colors.append(row_colors)
+
+        tbl = ax.table(cellText=cell_data, colLabels=col_labels,
+                       cellColours=cell_colors,
+                       colColours=['#E3F2FD'] * len(col_labels),
+                       loc='center', cellLoc='left')
+        tbl.auto_set_font_size(False)
+        tbl.set_fontsize(7)
+        tbl.auto_set_column_width(list(range(len(col_labels))))
+        tbl.scale(1.0, 1.35)
+
+        page_label = f' (page {page+1}/{n_pages})' if n_pages > 1 else ''
+        ax.set_title(f'{yr} Pre-Election Tweets \u2014 Per-Sentence RoBERTa Sentiment{page_label}\n'
+                     f'Rows {start+1}\u2013{end} of {n_rows}',
+                     fontsize=11, fontweight='bold', pad=15)
+        fig.tight_layout()
+        suffix = f'_p{page+1}' if n_pages > 1 else ''
+        png_path = OUT_DIR / f'x_nlp_per_tweet_{yr}{suffix}.png'
+        fig.savefig(png_path, dpi=160, bbox_inches='tight')
+        plt.close(fig)
+        print(f'Saved: {png_path}')
